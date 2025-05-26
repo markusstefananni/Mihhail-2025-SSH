@@ -1,0 +1,25 @@
+#!/bin/bash
+
+echo "Testime Apache2 konfiguratsiooni..."
+
+# 1. Kontrolli faili olemasolu
+if [ -f /var/www/html/index.html ]; then
+    echo "Fail /var/www/html/index.html eksisteerib."
+else
+    echo "Fail /var/www/html/index.html puudub!"
+fi
+
+# 2. Kontrolli teenuse seisundit
+if systemctl is-active --quiet apache2; then
+    echo "Teenuse apache2 staatus: töötab."
+else
+    echo "Teenuse apache2 staatus: EI tööta."
+fi
+
+# 3. Kontrolli failide omanikuõigusi
+OWNER=$(stat -c '%U' /var/www/html/index.html 2>/dev/null)
+if [[ "$OWNER" == "root" || "$OWNER" == "www-data" ]]; then
+    echo "Faili /var/www/html/index.html omanik on sobilik: $OWNER"
+else
+    echo "Faili /var/www/html/index.html omanik on ebakorrektne: $OWNER"
+fi
