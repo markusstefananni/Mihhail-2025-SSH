@@ -1,0 +1,10 @@
+#!/bin/bash
+
+LOGFILE="/var/log/system_health.log"
+DATE=$(date "+%Y-%m-%d %H:%M:%S")
+
+echo "[$DATE] Süsteemi tervisekontrolli logi" >> "$LOGFILE"
+echo "CPU koormus: $(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4 "%"}')" >> "$LOGFILE"
+echo "Mälu kasutus: $(free -h | awk '/Mem:/ {print $3 "/" $2}')" >> "$LOGFILE"
+echo "Kettaruum: $(df -h / | awk 'NR==2 {print $5 " kasutusel"}')" >> "$LOGFILE"
+echo "---" >> "$LOGFILE"
