@@ -1,0 +1,12 @@
+$service = Get-Service -Name "apache2" -ErrorAction SilentlyContinue
+
+if ($service) {
+    Write-Host "apache2 teenus on olemas."
+    if ($service.Status -eq "Running") {
+        Write-Host "apache2 töötab."
+    } else {
+        Write-Host "apache2 ei tööta."
+    }
+} else {
+    Write-Host "apache2 teenust ei leitud."
+}
