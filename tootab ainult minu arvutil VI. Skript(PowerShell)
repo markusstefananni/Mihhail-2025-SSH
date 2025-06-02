@@ -1,0 +1,178 @@
+Kaivitusopetus> ❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗
+
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+& "C:\Users\Administrator\Documents\test6.ps1"
+
+Kui tahad automaatselt panna siis> ❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗
+
+Windows Task Scheduler – Skripti automaatne ajastamine
+1. Salvesta oma skript failina
+Näiteks C:\Scripts\SystemCheck.ps1 (loo kausta C:\Scripts kui pole).
+
+2. Ava Task Scheduler
+Vajuta Win + R, kirjuta taskschd.msc ja vajuta Enter
+
+Või otsi Start menüüst “Task Scheduler”
+
+3. Loo uus ülesanne (Task)
+Vali: "Create Task..."
+
+Name: Pane sobiv nimi, nt "System Health Check"
+
+Options: Pane linnuke "Run with highest privileges" (see tagab administraatori õigused)
+
+Configure for: vali Windows versioon, nt "Windows 10"
+
+4. Ajastus (Trigger)
+Mine vahekaardile Triggers
+
+Vajuta New...
+
+Valikutes:
+
+Daily: valides iga päev kell mingi aeg (nt 08:00)
+
+Või Daily + Repeat task every: 6 hours, duration: Indefinitely (kord iga 6 tunni järel)
+
+Vajuta OK
+
+5. Käivitus (Action)
+Mine vahekaardile Actions
+
+Vajuta New...
+
+Action: "Start a program"
+
+Program/script: kirjuta powershell.exe
+
+Add arguments (optional):
+
+plaintext
+Copy
+Edit
+-NoProfile -ExecutionPolicy Bypass -File "C:\Scripts\SystemCheck.ps1"
+Vajuta OK
+
+6. Tingimused (Conditions) ja Seaded (Settings)
+Vajadusel eemalda linnuke "Start the task only if the computer is on AC power" (kui tahad ka sülearvutil akut kasutades)
+
+Määra soovitud muud sätted
+
+7. Salvesta ülesanne
+Vajuta OK
+
+Vajadusel sisesta administraatori parool
+
+8. Testi ülesannet
+Leia loodud ülesanne listist
+
+Paremklõps -> Run
+
+Kontrolli, kas skript logib faili ja/või saadab e-kirju (sõltuvalt sisu ja probleemidest)
+
+
+
+
+
+
+
+
+
+
+SKRIPT>  ❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗ VAJA PANNA  $appPassword = "XXXXXXXXXX"
+
+
+# CONFIG
+$sender = "markus-stefan.anni@voco.ee"
+$receiver = "markus-stefan.anni@voco.ee"
+$appPassword = "XXXXXXXXXXXXXXXXX"
+$smtpServer = "smtp.gmail.com"
+$smtpPort = 587
+$logDir = "C:\logs"
+$timestamp = Get-Date -Format "yyyyMMdd_HHmm"
+$logFile = "$logDir\report_$timestamp.txt"
+
+# Tee logikaust, kui puudub
+if (-not (Test-Path $logDir)) {
+    New-Item -Path $logDir -ItemType Directory | Out-Null
+}
+
+# Funktsioon logimiseks
+function Log($text) {
+    Add-Content -Path $logFile -Value $text
+}
+
+# Algus
+Log "System health report - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+Log ""
+
+# Kontrolli teenuseid
+$services = @("wuauserv", "WinDefend", "Dhcp")
+Log "Service status check:"
+$errors = @()
+foreach ($svc in $services) {
+    $status = (Get-Service -Name $svc -ErrorAction SilentlyContinue).Status
+    Log " - $svc : $status"
+    if ($status -ne 'Running') {
+        $errors += "Service $svc is not running (status: $status)"
+    }
+}
+
+# CPU koormus
+$cpu = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
+Log ""
+Log ("CPU usage: {0:N2}%" -f $cpu)
+if ($cpu -gt 90) {
+    $errors += "High CPU load: {0:N2}%" -f $cpu
+}
+
+# Mälu (vaba mälu MB-s)
+$ram = Get-CimInstance Win32_OperatingSystem
+$freeMemMB = [math]::Round($ram.FreePhysicalMemory / 1024, 2)
+Log ("Free Memory: {0} MB" -f $freeMemMB)
+if ($freeMemMB -lt 200) {
+    $errors += "Low free memory: $freeMemMB MB"
+}
+
+# Ketaste kasutus
+Log ""
+Log "Disk usage:"
+$drives = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -ge 0 }
+foreach ($drive in $drives) {
+    # Avoid division by zero
+    if (($drive.Used + $drive.Free) -eq 0) {
+        $usedPercent = 0
+    } else {
+        $usedPercent = ($drive.Used / ($drive.Used + $drive.Free)) * 100
+    }
+    Log (" - Drive {0}: {1:N2}% used" -f $drive.Name, $usedPercent)
+    if ($usedPercent -gt 80) {
+        $errors += "Drive $($drive.Name) usage critical: {0:N2}%" -f $usedPercent
+    }
+}
+
+# Kogu raport teksti
+$body = Get-Content $logFile -Raw
+
+# Lisa probleemide kokkuvõte e-kirja teemale ja sisule
+if ($errors.Count -gt 0) {
+    $subject = "Automatic system report - Issues detected"
+    $body += "`n`nDetected issues:`n" + ($errors -join "`n")
+} else {
+    $subject = "Automatic system report - All systems normal"
+    $body += "`n`nNo issues detected. System operating normally."
+}
+
+# Gmail SMTP sisselogimine ja saatmine
+try {
+    $securePassword = ConvertTo-SecureString $appPassword -AsPlainText -Force
+    $cred = New-Object System.Management.Automation.PSCredential ($sender, $securePassword)
+    
+    Send-MailMessage -From $sender -To $receiver -Subject $subject -Body $body -SmtpServer $smtpServer -Port $smtpPort -UseSsl -Credential $cred -BodyAsHtml:$false
+
+    Log "`nEmail sent successfully."
+}
+catch {
+    Log "`nFailed to send email: $_"
+    Write-Error "Failed to send email: $_"
+}
