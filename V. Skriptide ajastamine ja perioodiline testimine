@@ -1,0 +1,98 @@
+ ❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗WINDOWSIS: ❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗
+
+
+
+✅ Sammud: Task Scheduler’i kasutamine
+1. Ava Task Scheduler:
+Vajuta Start, otsi "Task Scheduler" ja ava see.
+
+2. Loo uus ülesanne:
+Vali "Create Basic Task…"
+
+Nimi: näiteks Tervisekontroll
+
+Kirjeldus: "Süsteemi seisundi logimine igapäevaselt"
+
+3. Vali ajastus:
+Daily – kui soovid 1x päevas (nt 08:00)
+
+Hourly – kui soovid iga tund (vajab natuke kohandamist, vt allpool)
+
+4. Käivitamise aeg:
+Nt 08:00 või täistund.
+
+5. Toiming:
+Vali "Start a program"
+
+Program/script: powershell.exe
+
+Add arguments:
+
+powershell
+Kopeeri
+Redigeeri
+-NoProfile -ExecutionPolicy Bypass -File "C:\Tee\Oma\skript.ps1"
+6. Kinnita ja salvesta
+⏲ Kui soovid skripti käivitada iga tund, tee nii:
+Loo uus Basic Task, nagu eespool.
+
+Aja seadistuse juures vali Daily, aga pärast viimast sammu:
+
+Ava Task Scheduler Library
+
+Paremklõps loodud ülesandel → Properties
+
+Ava Triggers sakk → Edit
+
+Pane linnuke Repeat task every: 1 hour, for a duration of: 1 day
+
+🔒 Tähtis:
+Veendu, et PowerShelli skript on .ps1 laiendiga ja täidesaatav.
+
+Vajadusel kasuta Set-ExecutionPolicy RemoteSigned administraatori PowerShelli aknas.
+
+
+
+
+❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗LINUXIS: ❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗❗
+
+
+
+
+
+
+✅ Sammud: Skripti ajastamine croniga
+1. Tee skript käivitatavaks:
+bash
+Kopeeri
+Redigeeri
+chmod +x /tee/oma/system_health.sh
+2. Ava crontab:
+bash
+Kopeeri
+Redigeeri
+crontab -e
+3. Lisa töö:
+Iga tund:
+
+cron
+Kopeeri
+Redigeeri
+0 * * * * /tee/oma/system_health.sh
+Iga päev kell 08:00:
+
+cron
+Kopeeri
+Redigeeri
+0 8 * * * /tee/oma/system_health.sh
+💡 Täiendused:
+Veendu, et bash-skript kasutab absoluutseid teid ja vajalikke õigusi kirjutamiseks faili (/var/log/system_health.log võib vajada sudo).
+
+Kui logifailile kirjutamine ebaõnnestub õiguste tõttu, kasuta näiteks:
+
+bash
+Kopeeri
+Redigeeri
+sudo /tee/oma/system_health.sh
+või salvesta logi kasutaja kodukataloogi.
+
